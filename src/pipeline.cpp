@@ -30,7 +30,11 @@ Metrics Pipeline::process(cv::Mat &frame) {
     tracker_.reset();
     size_ = frame.size();
     recovery_ = 0;
+    known_region_ = {};
   }
+  cv::Rect2f previous_region;
+  for (const auto &face : tracker_.tracks())
+    previous_region |= face.cover.empty() ? face.box : face.cover;
   auto start = Clock::now();
   try {
     tracker_.predict(frame);
@@ -60,9 +64,11 @@ Metrics Pipeline::process(cv::Mat &frame) {
     }
     m.detector_ms = ms(start);
   }
+  cv::Rect2f current_region;
   std::vector<Face> selected;
   for (auto &f : tracker_.tracks()) {
     unsafe = unsafe || !f.reliable || f.confidence < config_.confidence;
+    current_region |= f.cover.empty() ? f.box : f.cover;
     selected.push_back(f);
   }
   if (unsafe)
@@ -71,6 +77,10 @@ Metrics Pipeline::process(cv::Mat &frame) {
     recovery_++;
   if (config_.privacy_failsafe && recovery_ < 2)
     unsafe = true;
+  if (unsafe)
+    known_region_ |= previous_region | current_region;
+  else
+    known_region_ = current_region;
   m.unsafe = unsafe;
   m.faces = int(selected.size());
   if (unsafe && m.reason.empty())
@@ -92,16 +102,17 @@ Metrics Pipeline::process(cv::Mat &frame) {
   start = Clock::now();
   if (config_.privacy_failsafe && unsafe) {
     // The safety layer uses opaque censoring, independent of decorative effect and mask settings.
-    if (config_.failsafe_mode == "full-frame" || regions.empty())
+    auto safety = padded_rect(known_region_, frame.size(), config_.padding);
+    if (config_.failsafe_mode == "full-frame" || safety.empty() ||
+        m.reason == "face limit exceeded")
       frame.setTo(cv::Scalar::all(0));
     else if (config_.failsafe_mode == "upper-body")
       frame(cv::Rect(0, 0, frame.cols, std::max(1, frame.rows * 3 / 4))).setTo(cv::Scalar::all(0));
-    else
-      for (auto r : regions) {
-        if (config_.failsafe_mode == "expanded-face")
-          r = padded_rect(cv::Rect2f(r), frame.size(), .5);
-        frame(r).setTo(cv::Scalar::all(0));
-      }
+    else {
+      if (config_.failsafe_mode == "expanded-face")
+        safety = padded_rect(cv::Rect2f(safety), frame.size(), .5);
+      frame(safety).setTo(cv::Scalar::all(0));
+    }
   } else
     effects_.render(frame, regions, frame_);
   m.effects_ms = ms(start);

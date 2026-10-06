@@ -135,6 +135,32 @@ int main() {
     f = original.clone();
     expect(low.process(f).unsafe && cv::norm(f) == 0, "Low confidence fails closed");
     face.confidence = 1;
+    c.privacy_failsafe = true;
+    c.failsafe_mode = "last-known-region";
+    c.detection_interval = 1;
+    fake = std::make_unique<Fake>();
+    detector = fake.get();
+    Face first, second;
+    first.box = {20, 20, 30, 30};
+    first.cover = first.box;
+    second.box = {100, 70, 30, 30};
+    second.cover = second.box;
+    detector->results = {first, second};
+    Pipeline regional(c, std::move(fake));
+    for (int i = 0; i < 2; i++) {
+      f = original.clone();
+      regional.process(f);
+    }
+    detector->results = {first};
+    f = original.clone();
+    expect(regional.process(f).unsafe, "Loss of one of two faces activates regional fail-safe");
+    expect(cv::norm(f(cv::Rect(100, 70, 30, 30))) == 0,
+           "Regional fail-safe retains the disappeared face area");
+    f = original.clone();
+    regional.process(f);
+    expect(cv::norm(f(cv::Rect(100, 70, 30, 30))) == 0,
+           "Regional protection persists through confirmation recovery");
+    c.failsafe_mode = "full-frame";
     c.privacy_failsafe = false;
     Tracker tracker(c);
     tracker.refresh({face}, original);

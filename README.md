@@ -149,7 +149,7 @@ for recovery. Stderr announces state changes and the preview title always shows 
 Normal file pixels are not annotated unless `--debug` is explicit.
 
 `--failsafe-mode full-frame` is the default. `upper-body` censors the top 75% of the
-frame; `last-known-region` retains padded boxes; `expanded-face` expands those boxes.
+frame; `last-known-region` retains the padded union of known face areas through recovery; `expanded-face` expands those boxes.
 When there is no known box, every mode falls back to the whole frame. **These regional
 modes are weaker and can expose faces elsewhere.** Even full-frame mode cannot protect
 a face the detector never notices while another face remains confidently tracked. New

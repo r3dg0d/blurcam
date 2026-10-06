@@ -6,7 +6,7 @@ These are measured results from this host, not cross-machine guarantees.
 
 ## Tests
 
-* 68 C++ checks passed, including real YuNet one-face/two-face detection on a
+* 71 C++ checks passed, including real YuNet one-face/two-face detection on a
   public-domain NASA fixture, optical-flow motion, stable association, conservative
   smoothing coverage, masks, independent pixelation visual golden, deterministic effects,
   ROI isolation, overlay and TOML roundtrip.

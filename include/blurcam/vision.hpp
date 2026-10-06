@@ -74,6 +74,7 @@ class Pipeline {
   Effects effects_;
   uint64_t frame_ = 0;
   cv::Size size_;
+  cv::Rect2f known_region_;
   bool last_unsafe_ = false;
   int recovery_ = 0;
 
