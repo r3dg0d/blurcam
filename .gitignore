@@ -1,0 +1,10 @@
+/build*/
+/result*
+/benchmarks/
+/out/
+*.onnx
+*.mp4
+*.mkv
+*.webm
+__pycache__/
+*.pyc
