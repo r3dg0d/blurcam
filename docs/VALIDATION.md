@@ -97,9 +97,16 @@ zero-copy GPU surface pipeline. No GPU-inference or GPU-effect timings are claim
 
 ## Dependency check
 
-A runtime-closure vulnix scan was initiated against NVD. Its final status is recorded
-below before release. Vulnerability name/version matches require review; an empty or
-failed download is not evidence of an absence of vulnerabilities.
+The runtime-closure vulnix/NVD scan completed with advisory matches across 11 transitive
+packages. This is **not a clean dependency-security result**. The scan is name/version
+based and does not account for all Nix backports or distinguish similarly named projects.
+[Recorded findings](dependency-scan.json) and [triage](SECURITY-AUDIT.md) preserve the
+remaining uncertainties. Coreutils and all reported libssh2 issues have explicit named
+Nix patches; Apache ORC and Ruby zlib entries are package-name mismatches. Other entries
+need upstream/package follow-up; BlurCam does not invoke the reported cJSON utility,
+printing/server, deprecated DNS-printing or libsndfile codec interfaces. FFmpeg advisory
+fix ancestry could not be verified from its abbreviated upstream reference. No finding
+was silently suppressed. Keep dependencies patched and sandbox hostile media.
 
 ## Scope and release gates
 
