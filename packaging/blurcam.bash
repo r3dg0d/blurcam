@@ -1,0 +1,1 @@
+_blurcam() { COMPREPLY=( $(compgen -W 'file webcam virtualcam preview devices effects benchmark info models completions --help --effect --preset --backend --privacy-failsafe --padding --confidence --device --output --model --debug --verbose' -- "${COMP_WORDS[COMP_CWORD]}") ); }; complete -F _blurcam blurcam

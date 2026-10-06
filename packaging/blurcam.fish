@@ -1,0 +1,1 @@
+complete -c blurcam -f -a 'file webcam virtualcam preview devices effects benchmark info models completions --help --effect --preset --backend --privacy-failsafe --padding --confidence --device --output --model --debug --verbose'

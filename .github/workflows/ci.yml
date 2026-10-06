@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - run: nix flake check --print-build-logs
+      - run: nix build
+      - run: ./result/bin/blurcam --version
+      - name: Formatting
+        run: nix develop --command bash -c 'clang-format --dry-run --Werror src/*.cpp include/blurcam/*.hpp tests/core.cpp'
+      - name: Static analysis
+        run: nix develop --command cppcheck --enable=warning,performance,portability --error-exitcode=1 --suppress=missingIncludeSystem --inline-suppr --std=c++20 -Iinclude src
+      - name: Address and undefined behavior sanitizers
+        run: |
+          nix develop --command bash -c '
+            cmake -S . -B build-sanitize -DBLURCAM_SANITIZE=ON -DCMAKE_BUILD_TYPE=Debug
+            cmake --build build-sanitize -j2
+            ctest --test-dir build-sanitize --output-on-failure
+          '
+      - name: Dependency vulnerability report
+        continue-on-error: true
+        timeout-minutes: 10
+        run: nix run nixpkgs#vulnix -- --closure ./result --json > vulnerabilities.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-vulnerability-report
+          path: vulnerabilities.json

@@ -1,0 +1,113 @@
+.TH BLURCAM 1 "October 2026" "BlurCam 0.1.0"
+.SH NAME
+blurcam \- local face privacy and camera effects
+.SH SYNOPSIS
+.B blurcam
+[global options] command [command options]
+.SH DESCRIPTION
+Native Linux face detection, optical-flow tracking and ROI effects.
+No telemetry or cloud processing. Only explicit model installation uses the network.
+.SH COMMANDS
+.TP
+.B file INPUT OUTPUT
+Process MP4, MKV or WebM. INPUT may be stdin (-). OUTPUT may also be supplied
+with -o. Stdout (-) produces streaming MKV. Copies compatible audio and preserves
+video timestamps. Incompatible audio fails instead of being silently dropped.
+.TP
+.B preview
+Display the filtered webcam in an SDL window.
+.TP
+.B webcam
+Preview webcam or supply --output - for raw BGR24. --no-preview requires output.
+.TP
+.B virtualcam
+Write YUYV to existing v4l2loopback (default /dev/video10). --preview shows a window.
+.TP
+.B devices
+List accessible V4L2 names, formats, resolutions and frame intervals.
+.TP
+.B effects [NAME]
+List effects, descriptions and parameters.
+.TP
+.B models install | list
+Install checksum-pinned MIT YuNet or inspect installation status.
+.TP
+.B benchmark
+Synthetic stage timing; --resolution WIDTHxHEIGHT, --fps N, --frames N.
+.TP
+.B info
+Show library versions and CPU/CUDA/encoder capabilities.
+.TP
+.B completions bash | zsh | fish
+Emit basic shell completion.
+.SH OPTIONS
+.TP
+.B --effect NAME[,NAME...]
+Ordered effect stack; option may be repeated.
+.TP
+.B --preset NAME
+privacy, max-privacy, anonymous, cyberpunk, glitch, VHS, subtle, medium, chaos.
+.TP
+.B --config PATH, --profile NAME, --save-config PATH
+TOML options. Precedence: defaults, global TOML, built-in preset, user profile, CLI.
+Saving refuses overwrite.
+.TP
+.B --backend auto|cpu|cuda
+Detector inference backend. GPU effects/decode are not implemented.
+.TP
+.B --device PATH_OR_NAME
+Camera path or exact friendly name (live modes only).
+.TP
+.B --input PATH
+Paced file replay for live modes, without accessing a camera.
+.TP
+.B --width N, --height N, --fps N
+Requested live camera format.
+.TP
+.B --limit-frames N
+Bound a live session. Zero runs until EOF, quit or signal.
+.TP
+.B --confidence F, --detection-interval N, --detector-size N, --max-faces N
+Score threshold, refresh period, max detector side, detection capacity.
+.TP
+.B --tracking-smoothing F, --padding F
+Previous coordinate weight and expansion fraction per side.
+.TP
+.B --faces all|largest|ID, --mask box|ellipse
+Face selection and mask. Selective/ellipse modes can expose faces or box corners.
+.TP
+.B --privacy-failsafe, --no-privacy-failsafe
+Opaque covering on detected uncertainty. Two detection confirmations permit recovery.
+.TP
+.B --failsafe-mode full-frame|upper-body|last-known-region|expanded-face
+Full-frame is default. Regional modes provide weaker protection.
+.TP
+.B --blur-radius N, --blur-type gaussian|box, --pixel-size N
+Blur kernel width (rounded to odd) and mosaic block width.
+.TP
+.B --seed N, --image PATH
+Effect RNG seed and RGBA overlay image.
+.TP
+.B --codec auto|h264|h265|vp9|av1|ffv1|h264_nvenc|hevc_nvenc|av1_nvenc
+File encoder. Auto selects software H.264 or VP9 for WebM.
+.TP
+.B --overwrite
+Explicit atomic replacement of file output. Input and output must differ.
+.TP
+.B --quiet, --verbose, --debug, --threads N
+Logs, backend details, visible debug annotations, worker count.
+.SH PREVIEW KEYS
+q/Escape quit; 1 blur; 2 pixelate; 3 glitch; 4 censor; 5 VHS;
+[ and ] adjust strength; f FPS title; d/t debug boxes (including simultaneous outputs).
+.SH PRIVACY
+No detector guarantees anonymity. A never-detected face can remain visible while
+another face is tracked. Use opaque censoring, box masks, detection interval 1 and
+full-frame fail-safe for conservative use. Review all sensitive recordings.
+Regional fail-safe modes and decorative effects are not equivalent protection.
+.SH FILES
+~/.config/blurcam/config.toml; ~/.local/share/blurcam/models/yunet-2023mar.onnx.
+XDG_CONFIG_HOME and XDG_DATA_HOME override the roots.
+.SH EXIT STATUS
+0 success, 1 runtime failure, CLI parser-specific nonzero errors, 130 interrupted pipeline.
+.SH SEE ALSO
+ffmpeg(1), v4l2-ctl(1)

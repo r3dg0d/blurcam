@@ -1,0 +1,30 @@
+name: Source release
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing, hardware-validated release tag
+        required: true
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: cachix/install-nix-action@v31
+      - run: nix flake check --print-build-logs
+      - name: Package source only
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          git archive --format=tar.gz --prefix=blurcam/ HEAD > blurcam-source.tar.gz
+          sha256sum blurcam-source.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-release
+          path: |
+            blurcam-source.tar.gz
+            SHA256SUMS

@@ -1,0 +1,20 @@
+{
+  "resolution": "1920x1080",
+  "frames": 60,
+  "backend": "CPU",
+  "fixture": "synthetic texture; one ground-truth tracker/effect ROI; detector finds no real faces",
+  "detector_ms_per_call": 4.226,
+  "detector_amortized_ms": 0.845,
+  "tracker_ms": 0.844,
+  "mask_ms": 0.0,
+  "effects_ms": 1.615,
+  "total_ms": 3.499,
+  "p95_ms": 7.174,
+  "processing_fps": 285.778,
+  "target_fps": 30,
+  "realtime_budget_met": true,
+  "capture_fps": null,
+  "dropped_frames": null,
+  "encoder": null,
+  "end_to_end_latency_ms": null
+}
