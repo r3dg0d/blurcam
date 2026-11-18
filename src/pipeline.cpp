@@ -106,9 +106,12 @@ Metrics Pipeline::process(cv::Mat &frame) {
     if (config_.failsafe_mode == "full-frame" || safety.empty() ||
         m.reason == "face limit exceeded")
       frame.setTo(cv::Scalar::all(0));
-    else if (config_.failsafe_mode == "upper-body")
-      frame(cv::Rect(0, 0, frame.cols, std::max(1, frame.rows * 3 / 4))).setTo(cv::Scalar::all(0));
-    else {
+    else if (config_.failsafe_mode == "upper-body") {
+      const int upper_height = std::max(1, frame.rows * 3 / 4);
+      frame.rowRange(0, upper_height).setTo(cv::Scalar::all(0));
+      if (safety.br().y > upper_height)
+        frame(safety).setTo(cv::Scalar::all(0));
+    } else {
       if (config_.failsafe_mode == "expanded-face")
         safety = padded_rect(cv::Rect2f(safety), frame.size(), .5);
       frame(safety).setTo(cv::Scalar::all(0));

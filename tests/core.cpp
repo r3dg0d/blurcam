@@ -160,6 +160,26 @@ int main() {
     regional.process(f);
     expect(cv::norm(f(cv::Rect(100, 70, 30, 30))) == 0,
            "Regional protection persists through confirmation recovery");
+    Config upper_config = c;
+    upper_config.failsafe_mode = "upper-body";
+    upper_config.padding = .1;
+    fake = std::make_unique<Fake>();
+    detector = fake.get();
+    detector->results = {first, second};
+    Pipeline upper_body(upper_config, std::move(fake));
+    for (int i = 0; i < 2; i++) {
+      f = original.clone();
+      upper_body.process(f);
+    }
+    detector->results = {first};
+    f = original.clone();
+    expect(upper_body.process(f).unsafe, "Face loss activates upper-body fail-safe");
+    expect(cv::norm(f.rowRange(0, 96)) == 0, "Upper-body fail-safe censors the top 75 percent");
+    expect(cv::norm(f(cv::Rect(100, 96, 30, 4))) == 0,
+           "Upper-body fail-safe covers the disappeared face below the cutoff");
+    const cv::Rect lower_background(145, 100, 15, 28);
+    expect(equal(f(lower_background), original(lower_background)),
+           "Upper-body fail-safe preserves lower background outside known coverage");
     c.failsafe_mode = "full-frame";
     c.privacy_failsafe = false;
     Tracker tracker(c);
