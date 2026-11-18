@@ -339,20 +339,23 @@ void live(const std::string &device, const std::string &output, const std::strin
               quit = true;
               break;
             case SDLK_1:
-              pipeline.change_effect("blur");
-              break;
             case SDLK_2:
-              pipeline.change_effect("pixelate");
-              break;
             case SDLK_3:
-              pipeline.change_effect("glitch");
-              break;
             case SDLK_4:
-              pipeline.change_effect("censor");
-              break;
             case SDLK_5:
-              pipeline.change_effect("vhs");
+            case SDLK_6:
+            case SDLK_7:
+            case SDLK_8:
+            case SDLK_9: {
+              const auto &effect = c.filter_slots[e.key.keysym.sym - SDLK_1];
+              if (!effect.empty() && !e.key.repeat) {
+                pipeline.change_effect(effect);
+                if (!c.quiet)
+                  std::cerr << "Filter slot " << e.key.keysym.sym - SDLK_1 + 1 << ": " << effect
+                            << '\n';
+              }
               break;
+            }
             case SDLK_LEFTBRACKET:
               pipeline.adjust_strength(-1);
               break;

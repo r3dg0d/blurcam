@@ -22,6 +22,12 @@ with tempfile.TemporaryDirectory(prefix="blurcam-integration-") as d:
         call(command, "--help")
     call("effects")
     call("effects", "glitch")
+    names = set(call("effects", "--names").stdout.decode().splitlines())
+    assert len(names - {"rgb-glitch", "overlay"}) >= 15
+    assert {"grayscale", "sepia", "duotone", "threshold", "emboss", "mirror"} <= names
+    for slot in ["0=blur", "10=blur", "9=invalid", "9=overlay"]:
+        rejected = call("preview", "--filter-slot", slot, ok=False)
+        assert b"filter slot" in rejected.stderr or b"--filter-slot" in rejected.stderr
     call("effects", "no-such-effect", ok=False)
     call("info")
     call("devices")
@@ -78,7 +84,7 @@ with tempfile.TemporaryDirectory(prefix="blurcam-integration-") as d:
             return [float(f["pts_time"]) for f in json.loads(r.stdout)["frames"]]
         assert timestamps(vfr) == timestamps(d/"vfr-out.mkv"), "VFR timestamps changed"
         env = dict(os.environ, SDL_VIDEODRIVER="dummy", SDL_AUDIODRIVER="dummy")
-        call("preview", "--input", source, "--model", model, "--limit-frames", "3", "--privacy-failsafe", env=env)
+        call("preview", "--input", source, "--model", model, "--limit-frames", "3", "--privacy-failsafe", "--filter-slot", "1=", "--filter-slot", "9=duotone", env=env)
         live = call("virtualcam", "--input", source, "--output", "-", "--model", model, "--limit-frames", "3", "--privacy-failsafe", "--quiet").stdout
         assert len(live) == 4 * 160 * 120 * 3 and not any(live), "Raw live failsafe or final black frame failed"
         call("virtualcam", "--input", source, "--output", "/dev/does-not-exist", "--model", model, ok=False)

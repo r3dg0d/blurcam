@@ -1,10 +1,12 @@
 #pragma once
+#include <array>
 #include <filesystem>
 #include <string>
 #include <vector>
 namespace blurcam {
 struct Config {
   std::vector<std::string> effects{"blur"};
+  std::array<std::string, 9> filter_slots{"blur", "pixelate", "glitch", "censor", "vhs"};
   std::string preset, mask = "box", blur_type = "gaussian", faces = "all",
                       failsafe_mode = "full-frame";
   std::string acceleration = "auto", codec = "auto", model, image;

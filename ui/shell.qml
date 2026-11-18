@@ -1,4 +1,6 @@
 //@ pragma Env QT_QUICK_CONTROLS_STYLE=Fusion
+//@ pragma StateDir $BASE/blurcam
+import QtCore
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs
@@ -14,6 +16,9 @@ ShellRoot {
     property string status: "Ready"
     property string output: ""
     property bool stopping: false
+    property string selectedFilter: "blur"
+    property var filters: ["blur", "pixelate", "glitch", "censor", "vhs"]
+    readonly property var slots: slotSettings.assignments.split(",")
     property bool closeAfterExit: false
     readonly property bool busy: activity !== ""
 
@@ -54,6 +59,31 @@ ShellRoot {
         return value.startsWith("file:///") ? decodeURIComponent(value.slice(7)) : ""
     }
 
+    Settings {
+        id: slotSettings
+        location: "file://" + Quickshell.statePath("filter-slots.ini")
+        property string assignments: "blur,pixelate,glitch,censor,vhs,,,,"
+    }
+
+    Process {
+        command: [shell.executable, "effects", "--names"]
+        running: true
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const names = text.trim().split("\n").filter(name =>
+                    /^[a-z][a-z0-9-]*$/.test(name) && name !== "rgb-glitch" && name !== "overlay")
+                if (names.includes("blur"))
+                    shell.filters = names
+            }
+        }
+    }
+
+    function assignSlot(index, filter) {
+        const updated = slots.slice()
+        updated[index] = filter
+        slotSettings.assignments = updated.join(",")
+    }
+
     function run() {
         const settings = [
             "--effect", effect.currentValue, "--faces", "all", "--debug=false",
@@ -63,11 +93,15 @@ ShellRoot {
         if (modes.currentIndex === 2) {
             start("File export", ["file", "--overwrite=" + (overwrite.checked ? "true" : "false"),
                                   "--output=" + destination.text, ...settings, "--", source.text])
-        } else if (modes.currentIndex === 1) {
+            return
+        }
+        const slotArgs = slots.flatMap((name, index) =>
+            ["--filter-slot", (index + 1) + "=" + (filters.includes(name) ? name : "")])
+        if (modes.currentIndex === 1) {
             start("Virtual camera", ["virtualcam", "--device=" + camera.text,
-                                     "--output=" + loopback.text].concat(settings))
+                                     "--output=" + loopback.text].concat(settings, slotArgs))
         } else {
-            start("Camera preview", ["preview", "--device=" + camera.text].concat(settings))
+            start("Camera preview", ["preview", "--device=" + camera.text].concat(settings, slotArgs))
         }
     }
 
@@ -107,9 +141,9 @@ ShellRoot {
         visible: true
         title: "BlurCam"
         width: 760
-        height: 650
+        height: 760
         minimumWidth: 620
-        minimumHeight: 610
+        minimumHeight: 690
         color: "#10151e"
         palette.window: "#10151e"
         palette.base: "#131c29"
@@ -243,14 +277,9 @@ ShellRoot {
                     Layout.fillWidth: true
                     Layout.columnSpan: 2
                     Accessible.name: "Face effect"
-                    textRole: "label"
-                    valueRole: "value"
-                    model: [
-                        { label: "Blur", value: "blur" },
-                        { label: "Pixelate", value: "pixelate" },
-                        { label: "Opaque censor", value: "censor" },
-                        { label: "Glitch", value: "glitch" }
-                    ]
+                    model: shell.filters
+                    currentIndex: Math.max(0, model.indexOf(shell.selectedFilter))
+                    onActivated: shell.selectedFilter = currentText
                 }
 
                 CheckBox {
@@ -274,13 +303,59 @@ ShellRoot {
                 }
             }
 
+            Label { text: "Filter slots"; font.bold: true }
+
+            GridLayout {
+                Layout.fillWidth: true
+                columns: 3
+                columnSpacing: 12
+                rowSpacing: 6
+                enabled: !shell.busy
+
+                Repeater {
+                    model: 9
+
+                    RowLayout {
+                        id: slotRow
+                        required property int index
+                        readonly property string assigned: shell.slots[index] || ""
+                        readonly property bool available: shell.filters.includes(assigned)
+                        Layout.fillWidth: true
+
+                        Button {
+                            text: slotRow.index + 1
+                            enabled: slotRow.available
+                            highlighted: slotRow.available && shell.selectedFilter === slotRow.assigned
+                            Accessible.name: "Use filter slot " + text
+                            onClicked: shell.selectedFilter = slotRow.assigned
+                        }
+
+                        ComboBox {
+                            Layout.fillWidth: true
+                            Layout.preferredWidth: 120
+                            Accessible.name: "Assign filter slot " + (slotRow.index + 1)
+                            model: ["Unassigned"].concat(shell.filters)
+                            currentIndex: slotRow.available ? shell.filters.indexOf(slotRow.assigned) + 1 : 0
+                            onActivated: shell.assignSlot(slotRow.index, currentIndex ? currentText : "")
+                        }
+
+                        Shortcut {
+                            sequence: String(slotRow.index + 1)
+                            enabled: !shell.busy && slotRow.available && !camera.activeFocus
+                                && !loopback.activeFocus && !source.activeFocus && !destination.activeFocus
+                            onActivated: shell.selectedFilter = slotRow.assigned
+                        }
+                    }
+                }
+            }
+
             Label {
                 Layout.fillWidth: true
                 wrapMode: Text.WordWrap
                 color: "#a4b2c7"
                 text: form.fileMode ? "Exports MP4, MKV or WebM. Compatible audio tracks are copied."
                     : form.virtualMode ? "Publish filtered video to an existing v4l2loopback device."
-                    : "Opens the filtered camera feed in a separate preview window."
+                    : "Opens a separate preview window. Press 1–9 there to switch filters."
             }
 
             RowLayout {

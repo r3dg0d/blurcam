@@ -20,6 +20,12 @@ const std::vector<EffectInfo> &effect_catalog() {
       {"thermal", "False-color heatmap (decorative)", "none"},
       {"posterize", "Reduced-color digital portrait (decorative)", "none"},
       {"neon", "Canny edges on dark background (decorative)", "none"},
+      {"grayscale", "Black-and-white luminance (decorative)", "none"},
+      {"sepia", "Warm sepia tones (decorative)", "none"},
+      {"duotone", "Indigo-to-mint luminance gradient (decorative)", "none"},
+      {"threshold", "High-contrast black and white (decorative)", "none"},
+      {"emboss", "Directional relief shading (decorative)", "none"},
+      {"mirror", "Horizontal reflection (decorative)", "none"},
       {"overlay", "Scaled RGBA image (transparent pixels reveal input)", "--image image.png"}};
   return v;
 }
@@ -117,6 +123,38 @@ void Effects::apply(cv::Mat &roi, const std::string &name, uint64_t frame) {
   }
   if (name == "invert") {
     cv::bitwise_not(roi, roi);
+    return;
+  }
+  if (name == "mirror") {
+    cv::flip(roi, roi, 1);
+    return;
+  }
+  if (name == "sepia") {
+    const cv::Matx33f bgr{.131f, .534f, .272f, .168f, .686f, .349f, .189f, .769f, .393f};
+    cv::transform(roi, roi, bgr);
+    return;
+  }
+  if (name == "grayscale" || name == "threshold" || name == "emboss" || name == "duotone") {
+    cv::Mat gray;
+    cv::cvtColor(roi, gray, cv::COLOR_BGR2GRAY);
+    if (name == "duotone") {
+      static const cv::Mat colors = [] {
+        const cv::Vec3f dark{61, 18, 39}, light{189, 255, 109};
+        cv::Mat gradient(256, 1, CV_8UC3);
+        for (int i = 0; i < gradient.rows; ++i)
+          gradient.at<cv::Vec3b>(i) = dark + (light - dark) * (i / 255.f);
+        return gradient;
+      }();
+      cv::applyColorMap(gray, roi, colors);
+      return;
+    }
+    if (name == "threshold")
+      cv::threshold(gray, gray, 127, 255, cv::THRESH_BINARY);
+    if (name == "emboss") {
+      const cv::Matx33f kernel{-2, -1, 0, -1, 0, 1, 0, 1, 2};
+      cv::filter2D(gray, gray, -1, kernel, {-1, -1}, 128);
+    }
+    cv::cvtColor(gray, roi, cv::COLOR_GRAY2BGR);
     return;
   }
   if (name == "thermal") {

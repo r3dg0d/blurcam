@@ -93,12 +93,15 @@ int main(int argc, char **argv) {
     int limit = 0;
     bool no_preview = false;
     auto *preview =
-        app.add_subcommand("preview", "Filtered webcam preview; q quits, 1..5 switch effects");
+        app.add_subcommand("preview", "Filtered webcam preview; q quits, 1..9 select filter slots");
     auto *webcam = app.add_subcommand("webcam", "Filtered camera, optionally raw BGR24 stdout");
     auto *virtualcam =
         app.add_subcommand("virtualcam", "Publish to an existing v4l2loopback device");
+    std::vector<std::string> filter_slots;
     for (auto *sub : {preview, webcam, virtualcam}) {
       sub->fallthrough();
+      sub->add_option("--filter-slot", filter_slots,
+                      "Assign preview key N=EFFECT (1..9); N= clears the slot");
       sub->add_option("--device", camera, "Camera /dev/videoN or exact friendly name");
       sub->add_option("--input", test_input,
                       "Paced local file for replay/testing instead of camera");
@@ -120,6 +123,8 @@ int main(int argc, char **argv) {
     auto *eff = app.add_subcommand("effects", "List effects or inspect one");
     std::string effect;
     eff->add_option("name", effect);
+    bool effect_names = false;
+    eff->add_flag("--names", effect_names, "Print one effect name per line");
     auto *bench = app.add_subcommand(
         "benchmark", "Measure detector, tracker, masks and effects on synthetic frames");
     bench->fallthrough();
@@ -156,6 +161,11 @@ int main(int argc, char **argv) {
       if (end != height.size())
         throw std::runtime_error("Invalid resolution");
     }
+    for (const auto &slot : filter_slots) {
+      if (slot.size() < 2 || slot[0] < '1' || slot[0] > '9' || slot[1] != '=')
+        throw std::runtime_error("Expected --filter-slot N=EFFECT with N from 1 to 9");
+      c.filter_slots[slot[0] - '1'] = slot.substr(2);
+    }
     c.effects = bc::split_effects(c.effects);
     bc::validate(c);
     cv::setNumThreads(c.threads);
@@ -183,8 +193,11 @@ int main(int argc, char **argv) {
       bool found = effect.empty();
       for (auto &e : bc::effect_catalog())
         if (effect.empty() || effect == e.name) {
-          std::cout << e.name << " — " << e.description << "\n  CPU: yes; GPU: no\n  "
-                    << e.parameters << '\n';
+          if (effect_names)
+            std::cout << e.name << '\n';
+          else
+            std::cout << e.name << " — " << e.description << "\n  CPU: yes; GPU: no\n  "
+                      << e.parameters << '\n';
           found = true;
         }
       if (!found)

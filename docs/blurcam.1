@@ -26,8 +26,8 @@ Write YUYV to existing v4l2loopback (default /dev/video10). --preview shows a wi
 .B devices
 List accessible V4L2 names, formats, resolutions and frame intervals.
 .TP
-.B effects [NAME]
-List effects, descriptions and parameters.
+.B effects [NAME] [--names]
+List effects, descriptions and parameters. --names prints one name per line.
 .TP
 .B models install | list
 Install checksum-pinned MIT YuNet or inspect installation status.
@@ -44,6 +44,9 @@ Emit basic shell completion.
 .TP
 .B --effect NAME[,NAME...]
 Ordered effect stack; option may be repeated.
+.TP
+.B --filter-slot N=EFFECT
+Assign an SDL preview key from 1 to 9. Repeat to set multiple keys. Use N= to clear a slot.
 .TP
 .B --preset NAME
 privacy, max-privacy, anonymous, cyberpunk, glitch, VHS, subtle, medium, chaos.

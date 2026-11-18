@@ -68,6 +68,11 @@ window, **Virtual camera** publishes to an existing v4l2loopback device, and
 **Video file** exports to MP4, MKV or WebM. The UI starts with full-frame fail-safe
 enabled. **Stop** requests a graceful shutdown and cancels an in-progress export.
 
+Assign filters to slots **1–9** using the dropdown beside each number. Use the
+numbered button or key to select a filter before starting a job. In the SDL
+preview, press **1–9** to switch filters while it runs. Slots 6–9 start unassigned,
+and assignments are saved across launches.
+
 ## Use
 
 ```sh
@@ -123,7 +128,9 @@ blurcam webcam --no-preview --output - --width 1280 --height 720 --preset privac
 ### Effects
 
 `blur`, `pixelate`, `glitch` / `rgb-glitch`, `rgbshift`, `scanlines`, `vhs`, `censor`,
-`invert`, `thermal`, `posterize`, `neon`, and RGBA `overlay`.
+`invert`, `thermal`, `posterize`, `neon`, `grayscale`, `sepia`, `duotone`,
+`threshold`, `emboss`, `mirror`, and RGBA `overlay`. Run `blurcam effects` for
+descriptions or `blurcam effects --names` for a plain list.
 
 ```sh
 blurcam preview --effect pixelate,rgbshift,scanlines --pixel-size 24
@@ -135,8 +142,7 @@ blurcam preview --effect blur --blur-radius 61 --blur-type gaussian
 Stacks run in order. Blur radius is kernel width in pixels, rounded to odd; box blur
 is also available. Pixel size is a block width in pixels. Glitch combines pixelation,
 channel offsets, horizontal slices, corruption blocks and scanlines, with a deterministic
-seed. Decorative effects (RGB shift, VHS, inversion, thermal, edges, posterization) and
-transparent overlays can retain recognizable features. `privacy` selects coarse pixelation
+seed. Decorative effects and transparent overlays can retain recognizable features. `privacy` selects coarse pixelation
 plus fail-safe; `max-privacy` selects opaque face censoring plus fail-safe. Other presets:
 `anonymous`, `cyberpunk`, `glitch`, `VHS`, `subtle`, `medium`, `chaos`.
 
@@ -187,10 +193,14 @@ nominal rate without touching a physical camera. Keys:
 | Key | Action |
 | --- | --- |
 | q / Escape | Quit |
-| 1 / 2 / 3 / 4 / 5 | Blur / pixelate / glitch / censor / VHS |
+| 1–9 | Select a filter slot |
 | [ / ] | Decrease / increase blur and pixel strength |
 | f | Toggle measured FPS in window title |
 | d / t | Toggle debug boxes/IDs (also affects simultaneous outputs) |
+
+Slots 1–5 default to blur, pixelate, glitch, censor, and VHS. Assign a slot for
+the session with `blurcam preview --filter-slot 9=duotone`. Repeat
+`--filter-slot` to set multiple slots, or use `--filter-slot 1=` to clear one.
 
 Capture runs in a separate thread with a single replaceable latest-frame slot. It drops
 stale frames instead of growing a queue. Tracking/inference/effects run synchronously in

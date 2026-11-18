@@ -1,4 +1,4 @@
-#include "blurcam/config.hpp"
+#include "blurcam/vision.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -146,12 +146,17 @@ void validate(const Config &c) {
   const std::set<std::string> codecs{"auto",       "h264",       "h265",      "vp9", "av1",
                                      "h264_nvenc", "hevc_nvenc", "av1_nvenc", "ffv1"};
   fail(codecs.contains(c.codec), "unsupported codec");
-  const std::set<std::string> known{"blur",      "pixelate", "glitch", "rgb-glitch", "rgbshift",
-                                    "scanlines", "vhs",      "censor", "invert",     "thermal",
-                                    "posterize", "overlay",  "neon"};
+  const auto &catalog = effect_catalog();
+  auto known_effect = [&](const std::string &name) {
+    return std::any_of(catalog.begin(), catalog.end(),
+                       [&](const EffectInfo &effect) { return effect.name == name; });
+  };
   fail(!c.effects.empty(), "effect stack cannot be empty");
-  for (auto &e : c.effects)
-    fail(known.contains(e), ("Unknown effect: " + e).c_str());
+  for (const auto &effect : c.effects)
+    fail(known_effect(effect), ("Unknown effect: " + effect).c_str());
+  for (const auto &slot : c.filter_slots)
+    fail(slot.empty() || (slot != "overlay" && known_effect(slot)),
+         ("Invalid filter slot effect: " + slot).c_str());
   fail(std::find(c.effects.begin(), c.effects.end(), "overlay") == c.effects.end() ||
            !c.image.empty(),
        "overlay requires --image PNG");
