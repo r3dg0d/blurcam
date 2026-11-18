@@ -50,6 +50,24 @@ blurcam models install
 
 See [NixOS configuration](docs/NIXOS.md) for loopback, NVIDIA and Home Manager.
 
+### Quickshell desktop UI
+
+Install Quickshell 0.3.2 and put `blurcam` on your `PATH`. From a checkout, run:
+
+```sh
+qs -p ui/shell.qml
+```
+
+Set `BLURCAM_BIN` to an absolute executable path to use a local build, for example
+`BLURCAM_BIN="$PWD/build/blurcam" qs -p ui/shell.qml`. The installed UI lives at
+`share/blurcam/quickshell/shell.qml` under the installation prefix. For a Nix build,
+use `BLURCAM_BIN="$PWD/result/bin/blurcam" qs -p result/share/blurcam/quickshell/shell.qml`.
+
+Use **Install face model** on first launch. **Camera preview** opens a separate SDL
+window, **Virtual camera** publishes to an existing v4l2loopback device, and
+**Video file** exports to MP4, MKV or WebM. The UI starts with full-frame fail-safe
+enabled. **Stop** requests a graceful shutdown and cancels an in-progress export.
+
 ## Use
 
 ```sh
