@@ -6,7 +6,7 @@ A native C++20 Linux CLI with YuNet face detection, optical-flow tracking, local
 FFmpeg file processing, SDL previews, and v4l2loopback virtual output. No accounts,
 cloud inference, camera uploads, telemetry, or Python runtime in the video pipeline.
 
-**Version 0.1.0.** See [validation](docs/VALIDATION.md) for measured results
+**Version 0.2.0.** See [validation](docs/VALIDATION.md) for measured results
 and hardware checks. Face detection is fallible. Blur and pixelation do not guarantee
 anonymity. For sensitive use, prefer `--preset max-privacy`, review the entire output,
 and use box masks. Never assume a missed face has been hidden.

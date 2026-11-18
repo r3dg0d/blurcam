@@ -10,7 +10,7 @@
     hash = "sha256-jyOD5N08+7RVPqhxgQf8BCMhDclk+fQoBgSATtJVL6Q=";
    };
   in pkgs.stdenv.mkDerivation {
-   pname = "blurcam"; version = "0.1.0"; src = self;
+   pname = "blurcam"; version = "0.2.0"; src = self;
    nativeBuildInputs = with pkgs; [ cmake pkg-config python3 ];
    buildInputs = with pkgs; [ opencv cli11 tomlplusplus ffmpeg SDL2 openssl curl ];
    nativeCheckInputs = with pkgs; [ ffmpeg ];

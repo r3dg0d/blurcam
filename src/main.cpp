@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
     if (!profile.empty())
       bc::load_config(c, config, profile);
     CLI::App app{"BlurCam — blur, pixelate and anonymize faces locally"};
-    app.set_version_flag("--version", "blurcam 0.1.0");
+    app.set_version_flag("--version", "blurcam 0.2.0");
     app.require_subcommand(1);
     app.fallthrough();
     app.add_option("--config", config, "TOML configuration path");

@@ -474,7 +474,7 @@ void benchmark(const Config &c) {
                "\"end_to_end_latency_ms\": null\n}\n";
 }
 void info() {
-  std::cout << "BlurCam 0.1.0\nOpenCV " << CV_VERSION << "\nFFmpeg " << av_version_info()
+  std::cout << "BlurCam 0.2.0\nOpenCV " << CV_VERSION << "\nFFmpeg " << av_version_info()
             << "\nDetector: checksum-pinned YuNet\nInference: CPU; CUDA if OpenCV DNN provides "
                "it\nEffects/tracker/decode: CPU\nEncode: software; explicit NVENC if FFmpeg and "
                "driver support it\nPreview: SDL (Wayland/X11)\nVirtual camera: V4L2/v4l2loopback "
